@@ -454,7 +454,7 @@
         <div class="card-face front" id="cardFront">
           <div class="card-lang" id="frontLang">ITALIAN</div>
           <div class="card-word" id="frontWord">—</div>
-          <div class="card-tap-hint">tap to reveal</div>
+          <div class="card-tap-hint">tap to reveal · tap again to flip back</div>
         </div>
         <div class="card-face back hidden-face" id="cardBack">
           <div class="card-lang">ENGLISH</div>
@@ -945,12 +945,19 @@ function updateCard() {
 }
 
 function flipCard() {
-  if (isFlipped) return;
-  isFlipped = true;
-  document.getElementById('cardFront').classList.add('hidden-face');
-  document.getElementById('cardBack').classList.remove('hidden-face');
-  document.getElementById('wrongBtn').disabled = false;
-  document.getElementById('rightBtn').disabled = false;
+  const front = document.getElementById('cardFront');
+  const back = document.getElementById('cardBack');
+  const showingFront = !front.classList.contains('hidden-face');
+  if (showingFront) {
+    isFlipped = true;
+    front.classList.add('hidden-face');
+    back.classList.remove('hidden-face');
+    document.getElementById('wrongBtn').disabled = false;
+    document.getElementById('rightBtn').disabled = false;
+  } else {
+    front.classList.remove('hidden-face');
+    back.classList.add('hidden-face');
+  }
 }
 
 function markCard(correct) {
