@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Due Spicci — Flashcards</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2a2a2a;
+    --accent: #c8f045;
+    --accent2: #ff5c3a;
+    --text: #f0ede6;
+    --text-dim: #888;
+    --text-dimmer: #555;
+    --roman: #c8a95a;
+    --card-bg: #161616;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.4rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  header span {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tag-roman {
+    font-size: 0.65rem;
+    background: var(--roman);
+    color: #000;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* MODES */
+  .mode-bar {
+    display: flex;
+    gap: 6px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mode-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+
+  .mode-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .mode-btn:hover:not(.active) {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    padding: 0 28px;
+    margin: 16px 0 0;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  /* MAIN AREA */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 20px 20px;
+  }
+
+  /* FLASHCARD */
+  .card-area {
+    width: 100%;
+    max-width: 560px;
+    perspective: 1000px;
+    margin-bottom: 24px;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    min-height: 260px;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+
+  .card-inner.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    min-height: 260px;
+    backface-visibility: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 32px;
+    gap: 14px;
+  }
+
+  .card-face.back {
+    transform: rotateY(180deg);
+    background: var(--surface);
+  }
+
+  .card-lang {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dimmer);
+    font-weight: 500;
+  }
+
+  .card-word {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+    color: var(--text);
+  }
+
+  .card-face.back .card-word {
+    font-size: clamp(1.3rem, 4vw, 1.9rem);
+  }
+
+  .card-hint {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .card-context {
+    font-size: 0.72rem;
+    color: var(--text-dimmer);
+    text-align: center;
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    width: 100%;
+  }
+
+  .card-context em {
+    color: var(--roman);
+    font-style: normal;
+  }
+
+  .card-tap-hint {
+    font-size: 0.65rem;
+    color: var(--text-dimmer);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* CONTROLS */
+  .card-controls {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 16px;
+  }
+
+  .ctrl-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+
+  .ctrl-btn.wrong {
+    background: #2a1a18;
+    color: var(--accent2);
+    border: 1px solid #3d2320;
+  }
+
+  .ctrl-btn.wrong:hover { background: #3d2320; }
+
+  .ctrl-btn.right {
+    background: #1a2a12;
+    color: var(--accent);
+    border: 1px solid #253d18;
+  }
+
+  .ctrl-btn.right:hover { background: #253d18; }
+
+  .ctrl-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    padding: 0 28px 14px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--text-dimmer);
+  }
+
+  .filter-btn:hover:not(.active) { border-color: var(--text-dimmer); }
+
+  /* RESULTS PANEL */
+  .results-bar {
+    display: flex;
+    gap: 20px;
+    padding: 0 28px 16px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .results-bar .stat { display: flex; align-items: center; gap: 5px; }
+  .results-bar .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .results-bar .dot.green { background: var(--accent); }
+  .results-bar .dot.red { background: var(--accent2); }
+
+  /* BROWSE MODE */
+  .browse-grid {
+    width: 100%;
+    max-width: 760px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    padding: 4px 0;
+  }
+
+  .browse-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .browse-card:hover { border-color: var(--text-dimmer); }
+
+  .browse-it {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .browse-en {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  .browse-tags {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .tag.roman { background: rgba(200,169,90,0.15); color: var(--roman); }
+  .tag.verb { background: rgba(200,240,69,0.1); color: var(--accent); }
+  .tag.idiom { background: rgba(255,92,58,0.1); color: var(--accent2); }
+  .tag.noun { background: rgba(120,120,255,0.1); color: #a0a0ff; }
+  .tag.slang { background: rgba(180,120,220,0.1); color: #c8a0e0; }
+
+  /* COMPLETE SCREEN */
+  .complete-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .complete-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-style: italic;
+  }
+
+  .complete-screen p { color: var(--text-dim); font-size: 0.88rem; line-height: 1.6; }
+
+  .score-display {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .restart-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: opacity 0.15s;
+  }
+
+  .restart-btn:hover { opacity: 0.85; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Due Spicci</h1>
+  <span>Vocab Flashcards</span>
+</header>
+
+<div class="mode-bar">
+  <button class="mode-btn active" onclick="setMode('flashcard')">Flashcards</button>
+  <button class="mode-btn" onclick="setMode('browse')">Browse All</button>
+</div>
+
+<div class="filter-bar" id="filterBar">
+  <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" onclick="setFilter('roman', this)">Roman dialect</button>
+  <button class="filter-btn" onclick="setFilter('verb', this)">Verbs</button>
+  <button class="filter-btn" onclick="setFilter('idiom', this)">Idioms</button>
+  <button class="filter-btn" onclick="setFilter('noun', this)">Nouns</button>
+  <button class="filter-btn" onclick="setFilter('slang', this)">Slang</button>
+  <button class="filter-btn" onclick="setFilter('weak', this)">⚠ Weak</button>
+</div>
+
+<div class="progress-bar-wrap" id="progressWrap">
+  <div class="progress-meta">
+    <span id="progressLabel">Card 1 of 40</span>
+    <span id="progressPct">0%</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+</div>
+
+<div class="results-bar" id="resultsBar">
+  <div class="stat"><div class="dot green"></div><span id="rightCount">0 got it</span></div>
+  <div class="stat"><div class="dot red"></div><span id="wrongCount">0 missed</span></div>
+</div>
+
+<main id="mainArea">
+
+  <!-- FLASHCARD VIEW -->
+  <div id="flashcardView">
+    <div class="card-area">
+      <div class="card-inner" id="cardInner" onclick="flipCard()">
+        <div class="card-face front" id="cardFront">
+          <div class="card-lang" id="frontLang">ITALIAN</div>
+          <div class="card-word" id="frontWord">—</div>
+          <div class="card-tap-hint">tap to reveal</div>
+        </div>
+        <div class="card-face back" id="cardBack">
+          <div class="card-lang">ENGLISH</div>
+          <div class="card-word" id="backWord">—</div>
+          <div class="card-hint" id="backHint"></div>
+          <div class="card-context" id="backContext"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-controls" id="cardControls">
+      <button class="ctrl-btn wrong" id="wrongBtn" onclick="markCard(false)" disabled>✗ Missed it</button>
+      <button class="ctrl-btn right" id="rightBtn" onclick="markCard(true)" disabled>✓ Got it</button>
+    </div>
+  </div>
+
+  <!-- COMPLETE SCREEN -->
+  <div id="completeScreen" class="hidden complete-screen">
+    <div style="font-size:2.5rem">🎉</div>
+    <h2>Round complete!</h2>
+    <div class="score-display" id="scoreDisplay">—</div>
+    <p id="scoreMsg"></p>
+    <button class="restart-btn" onclick="restartDeck()">Go again</button>
+    <button class="restart-btn" style="background:var(--surface2);color:var(--text)" onclick="restartWeak()">Only missed cards</button>
+  </div>
+
+  <!-- BROWSE VIEW -->
+  <div id="browseView" class="hidden">
+    <div class="browse-grid" id="browseGrid"></div>
+  </div>
+
+</main>
+
+<script>
+const VOCAB = [
+  // === STUDIED IN SESSION ===
+  { it: "staccà la capoccia", en: "switch your brain off / unplug", hint: "Roman for 'staccare la testa' — give your head a rest, stop overthinking", context: "<em>\"Però deve staccà la capoccia, deve stà tranquilla.\"</em>", tags: ["roman","idiom"] },
+  { it: "i buffi", en: "dangerous/criminal debts", hint: "Roman slang — money owed to shady people, not just ordinary debt", context: "<em>\"Non je parlà di buffi, di minacce, Tartallegra.\"</em>", tags: ["roman","slang","noun"] },
+  { it: "omertoso", en: "one who keeps a code of silence", hint: "From omertà — the Mafia vow of silence. Used here humorously about keeping a secret", context: "<em>\"Sò omertoso come le tre scimmie di Mosè.\"</em>", tags: ["slang","noun"] },
+  { it: "bocca di ciabatta", en: "can't keep a secret / big mouth", hint: "Literally 'ciabatta mouth' — the wide open shape of the bread as a mouth that won't stay shut", context: "<em>\"Ma fosse vero poi, con 'sta bocca di ciabatta.\"</em>", tags: ["roman","idiom"] },
+  { it: "il beccamorto", en: "undertaker / gravedigger", hint: "Literally 'corpse pecker' — an old, vivid word for an undertaker", context: "<em>\"Alle cinque vestito da beccamorto.\"</em>", tags: ["noun"] },
+  { it: "lanciare il cuore oltre l'ostacolo", en: "to take a leap of faith", hint: "Literally 'throw your heart over the obstacle' — committing before you know if you'll succeed", context: "<em>\"E lancià il cuore oltre l'ostacolo.\"</em>", tags: ["idiom"] },
+  { it: "la truffa dello specchietto", en: "the wing mirror scam", hint: "Classic Italian street con — someone claims you knocked off their mirror and demands cash", context: "<em>\"Ho menato a due che mi volevano fà la truffa dello specchietto.\"</em>", tags: ["idiom","noun"] },
+  { it: "l'attenuante", en: "mitigating circumstance", hint: "Legal term used ironically in everyday speech — 'the only excuse I'd accept'", context: "<em>\"C'avevi un'attenuante.\"</em>", tags: ["noun"] },
+  { it: "accannare", en: "to drop it / to obsess like a dog", hint: "Roman dialect from cane (dog) — either to go at something obsessively OR to drop it", context: "<em>\"E dai, accanna!\"</em>", tags: ["roman","verb"] },
+  { it: "il socio", en: "partner / mate / associate", hint: "Formal: business partner. Colloquial: mate, pal. 'Aho socio!' = hey man!", context: "<em>\"Come si chiama il socio del facocero?\"</em>", tags: ["slang","noun"] },
+  { it: "il facocero", en: "warthog", hint: "As in Pumba from The Lion King — used as a nickname in the show", context: "<em>\"Il socio del facocero\"</em>", tags: ["noun"] },
+  { it: "accollarsi", en: "to burden oneself with / to saddle yourself with", hint: "From collo (neck) — putting something around your neck. Used for relationships, problems, anything you choose to carry", context: "<em>\"Quando se semo accollati 'sta pratica.\"</em>", tags: ["verb"] },
+  { it: "la scintilla", en: "spark", hint: "Literal (electrical spark) and figurative (spark of an idea, spark between people). Far scattare una scintilla = to trigger a spark", context: "<em>\"Je fa scattà una scintilla.\"</em>", tags: ["noun"] },
+  { it: "le pozze di fango", en: "mud puddles / low moments", hint: "Literally mud pools — used figuratively for the lowest, dirtiest moments of your life", context: "<em>\"Le pozze di fango in cui ho strisciato.\"</em>", tags: ["idiom","noun"] },
+  { it: "strisciare", en: "to crawl / to slither", hint: "Like a snake or worm along the ground — more degrading than just 'crawl'", context: "<em>\"Le pozze di fango in cui ho strisciato.\"</em>", tags: ["verb"] },
+  { it: "l'erede", en: "heir / offspring (ironic)", hint: "Formally: someone who inherits. Colloquially and sarcastically: your kid, your little heir to the throne", context: "<em>\"Sò contento che l'erede tuo te mena.\"</em>", tags: ["noun"] },
+  { it: "la voragine", en: "chasm / sinkhole / emotional void", hint: "Geologically a sinkhole; figuratively an emotional black hole that swallows everything", context: "<em>\"Di voragini emotive.\"</em>", tags: ["noun"] },
+  { it: "schiaffeggiare", en: "to slap", hint: "From schiaffo (a slap). Prendere a schiaffi = to slap someone repeatedly", context: "<em>\"Perché gli dèi me devono schiaffeggià così?\"</em>", tags: ["verb"] },
+  { it: "fare il botto con l'assicurazione", en: "to commit insurance fraud", hint: "Fare il botto = to make a bang/big splash. Here: staging a fake accident to collect insurance money", context: "<em>\"Non mi è servito fà il botto con l'assicurazione.\"</em>", tags: ["idiom"] },
+  { it: "impuntarsi", en: "to dig your heels in", hint: "From punto (stitch/point) — like a needle catching on fabric. Stubborn refusal to budge", context: "<em>\"Me impuntavo per faje vedé i film che dicevo io.\"</em>", tags: ["verb"] },
+  { it: "rosicava", en: "he/she was seething / stewing", hint: "From rosicare (to gnaw) — chewing on something bitterly. 'Che rosica!' = he's so bitter!", context: "<em>\"Ma rosicava sempre che me impuntavo.\"</em>", tags: ["verb","slang"] },
+  { it: "abbioccarsi", en: "to suddenly nod off / conk out", hint: "That specific heavy drowsiness after a meal or on the sofa. No precise English equivalent", context: "<em>\"Ma poi me abbioccavo subito.\"</em>", tags: ["verb"] },
+  { it: "me se acciacca la vena", en: "when I get angry (lit: a vein gets crushed)", hint: "Acciaccare = to bruise/press. The vein that gets compressed = the pressure of rage building", context: "<em>\"Quando me se acciacca la vena, io non la sento la paura.\"</em>", tags: ["roman","idiom"] },
+  { it: "stare sul pezzo", en: "to stay focused / stay on top of it", hint: "From journalism — staying on a story. Widely used: stay focused, keep your head in the game", context: "<em>\"Mò me devi stà sul pezzo.\"</em>", tags: ["idiom"] },
+  { it: "ammaliata", en: "bewitched / under a spell", hint: "From malia (a spell/charm) — more than just attracted, actually enchanted", context: "<em>\"Ammaliata da qualche gesto efferrato da parte del coatto di turno.\"</em>", tags: ["verb"] },
+  { it: "il coatto", en: "Roman street tough / lout", hint: "A specific Roman archetype — working class, loud, tracksuits and gold chains. Il coatto di turno = whichever one happens to be around", context: "<em>\"Il coatto di turno.\"</em>", tags: ["roman","slang","noun"] },
+  { it: "baccagliare", en: "to pester / nag / hassle", hint: "Pure Roman dialect — relentless annoying pecking. Like a bird that won't stop squawking at you", context: "<em>\"Che cazzo me vieni a baccaglià?\"</em>", tags: ["roman","verb"] },
+  { it: "je parte la brocca", en: "they lose their mind / snap", hint: "Literally 'the jug departs' — la brocca = head in Roman slang. The head just launches away from reason", context: "<em>\"Poi je parte la brocca e fanno qualche cazzata.\"</em>", tags: ["roman","idiom"] },
+  { it: "sbragato", en: "torn open / disheveled / sprawled", hint: "From braghe (trousers) — split seam, everything hanging loose. A face full of cuts or someone slovenly on a sofa", context: "<em>\"Sempre tutto sbragato, aperto, pieno di sfregi.\"</em>", tags: ["roman","slang"] },
+  { it: "la lamata", en: "a slash with a blade", hint: "From lama (blade). Dare una lamata = to slash someone. Direct Roman street vocabulary", context: "<em>\"È la volta buona che te do una lamata.\"</em>", tags: ["roman","slang","noun"] },
+  { it: "la botola", en: "trapdoor / hatch", hint: "Literally a trapdoor in the floor. In the show: the hidden compartment inside a person where all their dark stuff is stored", context: "<em>\"Si accorgerà che c'è la botola.\"</em>", tags: ["noun","idiom"] },
+  { it: "stava in fissa", en: "was obsessed / fixated", hint: "Avere una fissa = to have a fixation. Widely used across Italy, not just Roman dialect", context: "<em>\"Lo sai che stava in fissa.\"</em>", tags: ["slang","idiom"] },
+  { it: "sgobbarselo", en: "to do someone in / off them (slang)", hint: "From sgobbare (to grind/slog). Sgobbarsi qualcuno = to get rid of someone, take them out. Roman slang repurposing an innocent word", context: "<em>\"Se lo sgobbano, a signò!\"</em>", tags: ["roman","verb","slang"] },
+  { it: "vacillare", en: "to waver / wobble / falter", hint: "Like a candle flame wobbling. Don't lose your nerve. Non vacillare = don't waver", context: "<em>\"Non me vacillà, che è la volta buona che te do una lamata.\"</em>", tags: ["verb"] },
+  { it: "lo sfregio", en: "a scar / slash mark / mark of dishonor", hint: "A slash, a scar — especially one that marks dishonor. Sfregiare = to scar someone. Loaded word in Roman street culture", context: "<em>\"Almeno uno sfregio gliel'ho fatto.\"</em>", tags: ["noun","slang"] },
+
+  // === FROM TRANSCRIPTS — ADDITIONAL ===
+  { it: "inghiottire", en: "to swallow / be swallowed", hint: "Literal (swallow food) and figurative (swallowed by darkness, debt, chaos). Stava venendo inghiottita = was being swallowed", context: "<em>\"Stava venendo inghiottita dall'abisso.\"</em>", tags: ["verb"] },
+  { it: "l'abisso", en: "the abyss", hint: "The depths, the void. Dall'abisso = by the abyss. Zerocalcare uses it for emotional and social collapse", context: "<em>\"Stava venendo inghiottita dall'abisso.\"</em>", tags: ["noun"] },
+  { it: "fracico", en: "rotten / soaking / waterlogged", hint: "Something completely sodden and falling apart — a rotten plank of wood, drenched clothes", context: "<em>\"Un pezzo di legno fracico.\"</em>", tags: ["slang"] },
+  { it: "la zattera", en: "the raft", hint: "As in the Titanic floating plank scene — Zero imagining kicking DiCaprio off his raft", context: "<em>\"Se volevano rubà la zattera tua.\"</em>", tags: ["noun"] },
+  { it: "il pizzo", en: "protection money / nest egg", hint: "Two meanings: Mafia protection money AND a small personal savings stash. The criminal undertone always hovers", context: "<em>\"Ha messo due soldi al pizzo.\"</em>", tags: ["slang","noun"] },
+  { it: "battere cassa", en: "to show up demanding money", hint: "Literally 'bang on the cash register.' Venire a battere cassa = come around collecting", context: "<em>\"Chi ha detto alla gente che potevano venì a batte cassa qua.\"</em>", tags: ["idiom"] },
+  { it: "allo sbando", en: "adrift / rudderless", hint: "Without direction, completely lost. Lo sbando = the drifting state. Used for a generation without stability", context: "<em>\"Eravamo i trentenni del nuovo millennio, allo sbando senza un punto fermo.\"</em>", tags: ["idiom"] },
+  { it: "mò", en: "now (Roman for adesso)", hint: "Pure Roman dialect — one of the most Roman words there is. Mò che fai? = what are you doing now?", context: "<em>\"Mò me devi stà sul pezzo.\"</em>", tags: ["roman"] },
+  { it: "ammazza", en: "wow / damn / bloody hell", hint: "Roman exclamation — literally 'it kills.' Completely versatile, used for surprise, admiration, horror", context: "<em>\"Ammazza! E je sta bene?\"</em>", tags: ["roman","slang"] },
+  { it: "manco", en: "not even (Roman for neanche)", hint: "Super common colloquial substitute for neanche/nemmeno. Manco per sogno = not even in your dreams", context: "<em>\"Non mi è servito manco fà il botto.\"</em>", tags: ["roman"] },
+  { it: "che c'entra?", en: "what does that have to do with it?", hint: "From c'entrare (to be relevant/connected). One of the most useful colloquial expressions — dismissing an irrelevant point", context: "<em>\"Ma che c'entra? Stava in fissa vent'anni fa.\"</em>", tags: ["idiom"] },
+  { it: "è la volta buona", en: "this time it'll really happen", hint: "Fixed expression — 'this is the good time / this time I really mean it.' Can be a genuine warning or sarcastic", context: "<em>\"È la volta buona che te do una lamata.\"</em>", tags: ["idiom"] },
+  { it: "mortacci tua", en: "Roman curse (roughly: damn you)", hint: "From morti (dead) — literally cursing someone's dead relatives. Extremely Roman, used as general strong exclamation, not always hostile", context: "<em>\"Mortacci tua, lo facevi pure vent'anni fa.\"</em>", tags: ["roman","slang"] },
+  { it: "vabbè", en: "whatever / fine / alright then", hint: "Contraction of va bene — used to concede a point, accept a situation, or brush something off", context: "<em>\"Con aggravante zoofila, ma vabbè.\"</em>", tags: ["roman","slang"] },
+  { it: "efferrato", en: "heinous / savage / brutal", hint: "Usually for crimes — un delitto efferato. Zerocalcare uses it sarcastically for stupid macho gestures", context: "<em>\"Ammaliata da qualche gesto efferrato da parte del coatto di turno.\"</em>", tags: ["slang"] },
+  { it: "trangugiare", en: "to wolf down / gulp", hint: "Greedy, rapid swallowing. Cento barattoli di Nutella trangugiati piangendo — wolfed down while crying", context: "<em>\"Barattoli di Nutella trangugiati piangendo.\"</em>", tags: ["verb"] },
+  { it: "spalmato", en: "spread / smeared", hint: "From spalmare (to spread like butter). Used for anything spread across a surface — honey, plaster, someone on a car bonnet", context: "<em>\"Spalmato di miele e sale grosso.\"</em>", tags: ["verb"] },
+  { it: "il setto nasale", en: "the nasal septum", hint: "The cartilage between your nostrils — memorably introduced when an ashtray rearranged Zero's", context: "<em>\"Mi ha rincalcato tutto il setto nasale.\"</em>", tags: ["noun"] },
+  { it: "rincalcare", en: "to ram in / press down / pack down", hint: "You rincalci soil around a plant, tobacco in a pipe — or an ashtray into someone's nose", context: "<em>\"Mi ha rincalcato tutto il setto nasale.\"</em>", tags: ["verb"] },
+  { it: "le notti in bianco", en: "sleepless nights", hint: "Notte in bianco = white/blank night — a night where you don't sleep at all. Very common Italian expression", context: "<em>\"Notti in bianco, e sulla faccia i segni del cuscino.\"</em>", tags: ["idiom"] },
+  { it: "cupo", en: "gloomy / dark / brooding", hint: "Atmosphere, tone, personality — cupo covers all of it. Un film cupo = a dark film. Cupo, angoscioso e mortifero", context: "<em>\"Cupo, angoscioso e mortifero.\"</em>", tags: ["slang"] },
+  { it: "angoscioso", en: "anguishing / distressing", hint: "From angoscia (anguish, dread). That particular heavy anxiety — not just sadness but existential dread", context: "<em>\"Cupo, angoscioso e mortifero.\"</em>", tags: [] },
+  { it: "districare", en: "to untangle / disentangle", hint: "To work through a tangle — a thread, a problem, a complicated situation. Spesi a districare un filo", context: "<em>\"Anni, mesi, giorni spesi a districare un filo.\"</em>", tags: ["verb"] },
+  { it: "l'amore di salvataggio", en: "rescue love / survival love", hint: "Zerocalcare's concept: falling for someone in a terrible situation just to have a reason to keep going", context: "<em>\"Era un amore di salvataggio.\"</em>", tags: ["idiom","noun"] },
+  { it: "il punto fermo", en: "a fixed point / anchor / certainty", hint: "Literally a firm/fixed point — something stable to hold onto. Senza un punto fermo = with nothing solid to stand on", context: "<em>\"Allo sbando senza un punto fermo.\"</em>", tags: ["idiom","noun"] },
+  { it: "regazzino / regà", en: "kid / guys (Roman for ragazzo / ragazzi)", hint: "Roman dialect pronunciation — the -g- softens. Regà is the vocative plural: hey guys", context: "<em>\"Regà, è lei.\"</em>", tags: ["roman"] },
+];
+
+// State
+let mode = 'flashcard';
+let filter = 'all';
+let deck = [];
+let currentIdx = 0;
+let isFlipped = false;
+let rights = 0;
+let wrongs = 0;
+let wrongCards = [];
+
+function getFilteredDeck() {
+  if (filter === 'all') return [...VOCAB];
+  if (filter === 'weak') return VOCAB.filter(v => wrongCards.some(w => w.it === v.it));
+  return VOCAB.filter(v => v.tags.includes(filter));
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['flashcard','browse'][i] === m);
+  });
+  document.getElementById('flashcardView').classList.toggle('hidden', m !== 'flashcard');
+  document.getElementById('completeScreen').classList.toggle('hidden', true);
+  document.getElementById('browseView').classList.toggle('hidden', m !== 'browse');
+  document.getElementById('progressWrap').classList.toggle('hidden', m !== 'flashcard');
+  document.getElementById('resultsBar').classList.toggle('hidden', m !== 'flashcard');
+  document.getElementById('filterBar').classList.remove('hidden');
+
+  if (m === 'browse') renderBrowse();
+  if (m === 'flashcard') startDeck();
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (mode === 'flashcard') startDeck();
+  else renderBrowse();
+}
+
+function startDeck() {
+  deck = shuffle(getFilteredDeck());
+  currentIdx = 0;
+  rights = 0;
+  wrongs = 0;
+  isFlipped = false;
+  document.getElementById('completeScreen').classList.add('hidden');
+  document.getElementById('flashcardView').classList.remove('hidden');
+  updateCard();
+  updateProgress();
+  updateResults();
+}
+
+function updateCard() {
+  if (currentIdx >= deck.length) { showComplete(); return; }
+  const card = deck[currentIdx];
+  isFlipped = false;
+  document.getElementById('cardInner').classList.remove('flipped');
+  document.getElementById('wrongBtn').disabled = true;
+  document.getElementById('rightBtn').disabled = true;
+
+  // Front: Italian
+  document.getElementById('frontLang').textContent = 'ITALIAN';
+  document.getElementById('frontWord').textContent = card.it;
+
+  // Back: English
+  document.getElementById('backWord').textContent = card.en;
+  document.getElementById('backHint').textContent = card.hint || '';
+  const ctx = document.getElementById('backContext');
+  if (card.context) {
+    ctx.innerHTML = card.context;
+    ctx.classList.remove('hidden');
+  } else {
+    ctx.innerHTML = '';
+    ctx.classList.add('hidden');
+  }
+}
+
+function flipCard() {
+  if (isFlipped) return;
+  isFlipped = true;
+  document.getElementById('cardInner').classList.add('flipped');
+  document.getElementById('wrongBtn').disabled = false;
+  document.getElementById('rightBtn').disabled = false;
+}
+
+function markCard(correct) {
+  const card = deck[currentIdx];
+  if (correct) {
+    rights++;
+    wrongCards = wrongCards.filter(w => w.it !== card.it);
+  } else {
+    wrongs++;
+    if (!wrongCards.some(w => w.it === card.it)) wrongCards.push(card);
+  }
+  currentIdx++;
+  updateProgress();
+  updateResults();
+  updateCard();
+}
+
+function updateProgress() {
+  const total = deck.length;
+  const done = currentIdx;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressLabel').textContent = `Card ${Math.min(done + 1, total)} of ${total}`;
+  document.getElementById('progressPct').textContent = `${pct}%`;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+}
+
+function updateResults() {
+  document.getElementById('rightCount').textContent = `${rights} got it`;
+  document.getElementById('wrongCount').textContent = `${wrongs} missed`;
+}
+
+function showComplete() {
+  document.getElementById('flashcardView').classList.add('hidden');
+  document.getElementById('completeScreen').classList.remove('hidden');
+  document.getElementById('filterBar').classList.add('hidden');
+  const total = rights + wrongs;
+  const pct = total ? Math.round((rights / total) * 100) : 0;
+  document.getElementById('scoreDisplay').textContent = `${pct}%`;
+  const msgs = [
+    [90, "Zerocalcare himself would be impressed."],
+    [70, "Solid — keep drilling the misses."],
+    [50, "Getting there. Roman dialect takes time."],
+    [0, "These words are slippery. Keep going."]
+  ];
+  const msg = msgs.find(([thresh]) => pct >= thresh)?.[1] || msgs[3][1];
+  document.getElementById('scoreMsg').textContent = `${rights} of ${total} cards · ${msg}`;
+  const weakBtn = document.querySelector('.restart-btn:last-child');
+  weakBtn.style.display = wrongCards.length ? '' : 'none';
+}
+
+function restartDeck() {
+  document.getElementById('filterBar').classList.remove('hidden');
+  startDeck();
+}
+
+function restartWeak() {
+  filter = 'weak';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('filterBar').classList.remove('hidden');
+  startDeck();
+}
+
+function renderBrowse() {
+  const filtered = getFilteredDeck();
+  const grid = document.getElementById('browseGrid');
+  grid.innerHTML = filtered.map(card => `
+    <div class="browse-card">
+      <div class="browse-it">${card.it}</div>
+      <div class="browse-en">${card.en}</div>
+      <div class="browse-tags">
+        ${card.tags.map(t => `<span class="tag ${t}">${t}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Init
+startDeck();
+</script>
+</body>
+</html>
