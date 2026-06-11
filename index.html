@@ -285,6 +285,7 @@
     gap: 6px;
     padding: 0 28px 14px;
     flex-wrap: wrap;
+    row-gap: 6px;
   }
 
   .filter-btn {
@@ -436,7 +437,14 @@
 
 <div class="filter-bar" id="filterBar">
   <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
-  <button class="filter-btn" onclick="setFilter('roman', this)">Roman dialect</button>
+  <button class="filter-btn" onclick="setFilter('ep1', this)">EP1</button>
+  <button class="filter-btn" onclick="setFilter('ep2', this)">EP2</button>
+  <button class="filter-btn" onclick="setFilter('ep3', this)">EP3</button>
+  <button class="filter-btn" onclick="setFilter('ep4', this)">EP4</button>
+  <button class="filter-btn" onclick="setFilter('ep5', this)">EP5</button>
+  <button class="filter-btn" onclick="setFilter('ep6', this)">EP6</button>
+  <button class="filter-btn" onclick="setFilter('ep8', this)">EP8</button>
+  <button class="filter-btn" onclick="setFilter('roman', this)">Roman</button>
   <button class="filter-btn" onclick="setFilter('verb', this)">Verbs</button>
   <button class="filter-btn" onclick="setFilter('idiom', this)">Idioms</button>
   <button class="filter-btn" onclick="setFilter('noun', this)">Nouns</button>
@@ -882,6 +890,10 @@ let wrongCards = [];
 function getFilteredDeck() {
   if (filter === 'all') return [...VOCAB];
   if (filter === 'weak') return VOCAB.filter(v => wrongCards.some(w => w.it === v.it));
+  if (filter.startsWith('ep')) {
+    const epNum = filter.replace('ep', '');
+    return VOCAB.filter(v => v.ts && v.ts.toLowerCase().startsWith('ep' + epNum + '·'));
+  }
   return VOCAB.filter(v => v.tags.includes(filter));
 }
 
