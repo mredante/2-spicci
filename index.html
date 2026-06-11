@@ -216,6 +216,18 @@
     font-style: normal;
   }
 
+  .card-timestamp {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dimmer);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    margin-top: 4px;
+  }
+
   .card-tap-hint {
     font-size: 0.65rem;
     color: var(--text-dimmer);
@@ -460,7 +472,8 @@
           <div class="card-lang">ENGLISH</div>
           <div class="card-word" id="backWord">—</div>
           <div class="card-hint" id="backHint"></div>
-          <div class="card-context" id="backContext"></div>
+          <div class="card-context hidden" id="backContext"></div>
+          <div class="card-timestamp hidden" id="backTimestamp"></div>
         </div>
       </div>
     </div>
@@ -941,6 +954,13 @@ function updateCard() {
   } else {
     ctx.innerHTML = '';
     ctx.classList.add('hidden');
+  }
+  const ts = document.getElementById('backTimestamp');
+  if (card.ts) {
+    ts.textContent = card.ts;
+    ts.classList.remove('hidden');
+  } else {
+    ts.classList.add('hidden');
   }
 }
 
