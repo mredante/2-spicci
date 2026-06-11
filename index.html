@@ -892,7 +892,14 @@ function getFilteredDeck() {
   if (filter === 'weak') return VOCAB.filter(v => wrongCards.some(w => w.it === v.it));
   if (filter.startsWith('ep')) {
     const epNum = filter.replace('ep', '');
-    return VOCAB.filter(v => v.ts && v.ts.toLowerCase().startsWith('ep' + epNum + '·'));
+    const epCards = VOCAB.filter(v => v.ts && v.ts.toLowerCase().startsWith('ep' + epNum + '·'));
+    return epCards.sort((a, b) => {
+      const toSecs = ts => {
+        const parts = ts.split('·')[1].split(':');
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      };
+      return toSecs(a.ts) - toSecs(b.ts);
+    });
   }
   return VOCAB.filter(v => v.tags.includes(filter));
 }
@@ -931,7 +938,8 @@ function setFilter(f, btn) {
 }
 
 function startDeck() {
-  deck = shuffle(getFilteredDeck());
+  const filtered = getFilteredDeck();
+  deck = filter.startsWith('ep') ? filtered : shuffle(filtered);
   currentIdx = 0;
   rights = 0;
   wrongs = 0;
